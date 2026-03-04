@@ -1,0 +1,254 @@
+prac 1 
+ Managing DataFrames with the dplyr package.
+
+install.packages("dplyr")
+library(dplyr)
+data<-data.frame(
+Name=c("A","B","C","D"),
+Age=c(20,22,21,23),
+Marks=c(75,88,64,91),
+Gender=c("F","M","F","M")
+)
+data
+data['Age']
+filter(data,Age>20)
+filter(data,Marks>80)
+arrange(data,Marks)
+select(data,Name,Marks)
+rename(data,Naam=Name)
+mutate(data,Summ=Age+Marks)
+transmute(data,Summ=Age+Marks)
+summarize(data,dhruv=sum(Marks),max(Age))
+
+
+prac 2
+Use dplyr Grammar for inbuilt data set car.
+data <- read.csv("E://EDA//prac 2//Automobile.csv")
+head(data) #398
+filter(data,weight>4000)
+arrange(data,weight)
+select(data,model_year,origin)
+rename(data,M_Y=model_year)
+mutate(data,MpgH=mpg+horsepower)
+transmute(data,MpgH=mpg+horsepower)
+summarize(data,max(weight),min(mpg),sum(displacement))
+data %>%
+group_by(origin) %>%
+summarise(total_cars = n())
+data %>%
+group_by(model_year) %>%
+summarise(avg_mpg = mean(mpg))
+
+
+practical 3 
+Use group by(), %>%,mutate(), rename(),arrange(), filter(), select().
+data <- read.csv("E:/eda1753/Automobile.csv")
+data
+library(dplyr)
+data %>%
+rename(
+Mpg=mpg,
+Weight = weight
+) %>%
+filter(Weight < 3000) %>%
+mutate(miles_per_g = Mpg / Weight) %>%
+group_by(Mpg) %>%
+arrange(desc(miles_per_g)) %>%
+select(
+Mpg,
+Weight,
+miles_per_g
+)
+
+prac 3 
+
+<- data.frame(
++   name = c("A", "B", "C", "D"),
++   marks = c(70, 85, 90, 60),
++   class = c("X", "X", "Y", "Y")
++ )
+
+> library(dplyr)
+> 
+> df %>%
++   select(name, marks)
+
+> df %>%
++   filter(marks > 75)
+
+df %>%
+  arrange(marks)
+
+df %>%
+  arrange(desc(marks))
+
+df %>%
+  mutate(total_marks = marks + 5)
+
+df %>%
+  rename(student_name = name)
+
+df %>%
+  group_by(class) %>%
+  summarise(avg_marks = mean(marks))
+
+
+Practical 4 
+Use the data set air quality from inbuilt data sets library. . Use summary statistics
+and find the important key values from the output a. Use boxplot and find the
+interquartile range. Interpret the boxplot and inner and outer fencing of outliers b.
+Check the missing value in the data set and fine the suitable solution for the
+missing values. c. Using histogram, find the distribution of data and give proper
+comment over the dataset.
+data<-read.csv("E://EDA//prac 4//airquality.csv")
+data
+data(airquality) # Load inbuilt dataset
+head(airquality) # View first rows
+str(airquality) # Structure of dataset
+#A) Summary Statistics
+summary(airquality)
+# B) Boxplot & Interquartile Range (IQR)
+boxplot(airquality$Ozone,
+main="Boxplot of Ozone",
+col="lightblue")
+IQR(airquality$Ozone, na.rm=TRUE)
+# C) Checking Missing Values
+sum(is.na(airquality))
+colSums(is.na(airquality))
+# D) Histogram
+hist(airquality$Temp,
+main="Histogram of Temperature",
+xlab="Temperature",
+col="orange")
+
+
+Practical 5
+ Use bar plot and identify the difference between bar plot and histograms.
+Conclude the appropriate use of bar plot and histogram.
+
+#Bar Plot
+# Create a vector of sales data
+fruits <- c("Apple", "Orange", "Banana", "Mango")
+sales_data <- c(23, 10, 18, 5)
+# Create the bar plot
+barplot(sales_data, names.arg = fruits,
+main = "Fruit Sales Comparison",
+xlab = "Fruit Type",
+ylab = "Number Sold",
+col = "skyblue",
+border = "black")
+
+#Histogram
+# Generate sample continuous numerical data
+set.seed(123)
+student_scores <- round(rnorm(100, mean = 70, sd = 10), 0)
+# Create the histogram
+hist(student_scores,
+main = "Distribution of Student Scores",
+xlab = "Score Range",
+ylab = "Frequency",
+col = "lightgreen",
+border = "black",
+breaks = 10)
+
+
+Practical 6
+ Explore the two dimensional data.
+data(mtcars)
+head(mtcars)
+str(mtcars)
+dim(mtcars)
+summary(mtcars)
+colnames(mtcars)
+install.packages("ggplot2")
+library(ggplot2)
+ggplot(mtcars, aes(x = wt, y = mpg, color = as.factor(am))) +
+geom_point() +
+labs(color = "Transmission (0 = auto, 1 = manual)",
+x ="Weight (1000 lbs)",
+y ="Miles per Gallon")
+hist(mtcars$mpg)
+pairs(mtcars[, 1:4])
+library(dplyr)
+filter(mtcars, mpg > 20)
+select(mtcars, mpg, wt)
+mutate(mtcars, efficiency = mpg/wt)
+arrange(mtcars, desc(mpg))
+
+
+Practical 7 Scatter plot between two variables.
+
+hours_studied <- c(1, 2, 3, 4, 5, 6, 7, 8)
+exam_score <- c(40, 45, 50, 55, 65, 70, 78, 85)
+data <- data.frame(hours_studied, exam_score)
+print(data)
+plot(
+data$hours_studied,
+data$exam_score,
+main = "Scatter Plot of Hours Studied vs Exam Score",
+xlab = "Hours Studied",
+ylab = "Exam Score",
+pch=19,
+col='green'
+)
+
+
+Practical8
+ Five number summary in exploratory data analysis
+data<-c(25,34,28,48,52,37,29,35,54,43,64,39,58,45)
+fivenum(data)
+summary(data)
+boxplot(data)
+
+
+Practical 9 
+Multiple histogram and multiple boxplots, Multiple scatter plots and colouring the
+graph
+
+library(ggplot2)
+#multiple histogram
+ggplot(iris, aes(x = Sepal.Length, fill = Species)) +
+geom_histogram(binwidth = 0.5, position = "identity",
+alpha = 0.5, color = "black") +
+labs(title = "Multiple Histograms by Species",
+x ="Sepal Length",
+y ="Frequency") +
+facet_wrap(~ Species, nrow = 1)
+
+#multiple boxplot
+ggplot(airquality, aes(x = factor(Month), y = Temp,
+fill = factor(Month))) +
+geom_boxplot() +
+labs(title = "Temperature Distribution by Month",
+x ="Month",
+y ="Degrees (F)") +
+theme(legend.position = "none")
+
+#multiple scatterplot
+ggplot(iris, aes(x = Sepal.Length,
+y =Sepal.Width,
+color = Species)) +
+geom_point() +
+labs(title = "Scatter Plots by Species",
+x ="Sepal Length",
+y ="Sepal Width") +
+facet_wrap(~ Species)
+
+#coloring the graph
+ggplot(iris, aes(x = Sepal.Length,
+y =Sepal.Width,
+color = Species)) +
+geom_point() +
+scale_color_manual(values = c("red","green","blue"))
+
+
+
+
+
+
+
+
+
+
+
+
