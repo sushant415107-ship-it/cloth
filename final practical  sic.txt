@@ -1,0 +1,1749 @@
+prac 1 **Packet Tracer Practical: Configure Cisco Routers for Syslog, NTP, and SSH**.
+I will explain **1️⃣ All Connections** and **2️⃣ All Configuration Steps (R1, R2, R3, PCs)** in a **simple step-by-step format** so you can directly perform it in Packet Tracer. 🖧
+
+---
+
+# 1️⃣ Device Connections (Topology Wiring)
+
+### Devices Required
+
+* 3 Routers **1941** (R1, R2, R3)
+* 2 Switches **2960**
+* 3 PCs / Servers
+
+---
+
+## 🔹 Connections
+
+### PC-A → Switch S1
+
+* **PC-A FastEthernet0 → S1 FastEthernet0/6**
+* Cable: **Copper Straight Through**
+
+### PC-B → Switch S1
+
+* **PC-B FastEthernet0 → S1 FastEthernet0/18**
+* Cable: **Copper Straight Through**
+
+### R1 → Switch S1
+
+* **R1 G0/1 → S1 FastEthernet0/5**
+* Cable: **Copper Straight Through**
+
+---
+
+### R1 → R2 (Serial)
+
+* **R1 S0/0/0 (DCE) → R2 S0/0/0**
+* Cable: **Serial DCE**
+
+---
+
+### R2 → R3 (Serial)
+
+* **R2 S0/0/1 (DCE) → R3 S0/0/1**
+* Cable: **Serial DCE**
+
+---
+
+### R3 → Switch S3
+
+* **R3 G0/1 → S3 FastEthernet0/5**
+* Cable: **Copper Straight Through**
+
+---
+
+### PC-C → Switch S3
+
+* **PC-C FastEthernet0 → S3 FastEthernet0/18**
+* Cable: **Copper Straight Through**
+
+---
+
+# 2️⃣ IP Address Configuration
+
+## R1
+
+```
+enable
+configure terminal
+
+interface g0/1
+ip address 192.168.1.1 255.255.255.0
+no shutdown
+
+interface s0/0/0
+ip address 10.1.1.1 255.255.255.252
+clock rate 64000
+no shutdown
+```
+
+---
+
+## R2
+
+```
+enable
+configure terminal
+
+interface s0/0/0
+ip address 10.1.1.2 255.255.255.252
+no shutdown
+
+interface s0/0/1
+ip address 10.2.2.1 255.255.255.252
+clock rate 64000
+no shutdown
+```
+
+---
+
+## R3
+
+```
+enable
+configure terminal
+
+interface g0/1
+ip address 192.168.3.1 255.255.255.0
+no shutdown
+
+interface s0/0/1
+ip address 10.2.2.2 255.255.255.252
+no shutdown
+```
+
+---
+
+# 3️⃣ Configure OSPF with MD5 Authentication
+
+## On R1
+
+```
+router ospf 1
+area 0 authentication message-digest
+
+interface s0/0/0
+ip ospf message-digest-key 1 md5 MD5pa55
+```
+
+---
+
+## On R2
+
+```
+router ospf 1
+area 0 authentication message-digest
+
+interface s0/0/0
+ip ospf message-digest-key 1 md5 MD5pa55
+
+interface s0/0/1
+ip ospf message-digest-key 1 md5 MD5pa55
+```
+
+---
+
+## On R3
+
+```
+router ospf 1
+area 0 authentication message-digest
+
+interface s0/0/1
+ip ospf message-digest-key 1 md5 MD5pa55
+```
+
+---
+
+# 4️⃣ Configure OSPF Networks
+
+## R1
+
+```
+router ospf 1
+network 192.168.1.0 0.0.0.255 area 0
+network 10.1.1.0 0.0.0.3 area 0
+```
+
+---
+
+## R2
+
+```
+router ospf 1
+network 10.1.1.0 0.0.0.3 area 0
+network 10.2.2.0 0.0.0.3 area 0
+```
+
+---
+
+## R3
+
+```
+router ospf 1
+network 10.2.2.0 0.0.0.3 area 0
+network 192.168.3.0 0.0.0.255 area 0
+```
+
+---
+
+# 5️⃣ Configure NTP
+
+## On PC-A (NTP Server)
+
+Go to
+**PC-A → Services → NTP**
+
+Enable:
+
+```
+Authentication → Enable
+Key: 1
+Password: NTPpa55
+```
+
+---
+
+## Configure Routers as NTP Clients
+
+### R1
+
+```
+ntp server 192.168.1.5
+ntp update-calendar
+
+ntp authenticate
+ntp trusted-key 1
+ntp authentication-key 1 md5 NTPpa55
+```
+
+---
+
+### R2
+
+```
+ntp server 192.168.1.5
+ntp update-calendar
+
+ntp authenticate
+ntp trusted-key 1
+ntp authentication-key 1 md5 NTPpa55
+```
+
+---
+
+### R3
+
+```
+ntp server 192.168.1.5
+ntp update-calendar
+
+ntp authenticate
+ntp trusted-key 1
+ntp authentication-key 1 md5 NTPpa55
+```
+
+---
+
+# 6️⃣ Configure Syslog
+
+## On PC-B (Syslog Server)
+
+Go to:
+
+```
+PC-B → Services → Syslog → ON
+```
+
+---
+
+## On Routers
+
+### R1
+
+```
+logging 192.168.1.6
+service timestamps log datetime
+```
+
+### R2
+
+```
+logging 192.168.1.6
+service timestamps log datetime
+```
+
+### R3
+
+```
+logging 192.168.1.6
+service timestamps log datetime
+```
+
+---
+
+# 7️⃣ Configure SSH on R3
+
+```
+hostname R3
+ip domain-name cisco.com
+
+crypto key generate rsa
+1024
+```
+
+---
+
+### Create Username
+
+```
+username admin secret cisco
+```
+
+---
+
+### Configure VTY
+
+```
+line vty 0 4
+login local
+transport input ssh
+```
+
+---
+
+# 8️⃣ Test SSH from PC-C
+
+Open **PC-C Command Prompt**
+
+```
+ssh -l admin 192.168.3.1
+```
+
+Password:
+
+```
+cisco
+```
+
+---
+
+# 9️⃣ Verification Commands
+
+### Check OSPF
+
+```
+show ip ospf neighbor
+```
+
+### Check NTP
+
+```
+show ntp status
+```
+
+### Check Logs
+
+```
+show logging
+```
+
+### Check SSH
+
+```
+show ip ssh
+```
+
+---
+
+✅ If you want, I can also give:
+
+* **Full Packet Tracer lab file guide (exact port mapping)**
+* **Very common errors in this practical (students always make these mistakes)**
+* **Viva questions teachers ask from this practical** (very important)
+
+
+
+
+
+I will explain **Practical 2: Configure AAA Authentication on Cisco Routers** in **2 parts**:
+
+1️⃣ **All Physical Connections (Topology Wiring)**
+2️⃣ **All Configuration Steps (R1, R2, R3, TACACS+, RADIUS)**
+
+Follow these exactly in **Cisco Packet Tracer**. 🖧
+
+---
+
+# 1️⃣ All Device Connections
+
+### Devices Required
+
+* 3 Routers **Cisco 1941** → R1, R2, R3
+* 3 Switches **2960** → S1, S2, S3
+* 3 PCs → PC-A, PC-B, PC-C
+* 2 Servers → TACACS+ Server, RADIUS Server
+
+---
+
+# 🔹 Network 1 (192.168.1.0/24)
+
+### Connections
+
+PC-A → S1
+
+```
+PC-A FastEthernet0 → S1 FastEthernet0/2
+```
+
+R1 → S1
+
+```
+R1 G0/1 → S1 FastEthernet0/1
+```
+
+---
+
+# 🔹 Network 2 (192.168.2.0/24)
+
+PC-B → S2
+
+```
+PC-B FastEthernet0 → S2 FastEthernet0/1
+```
+
+TACACS Server → S2
+
+```
+Server NIC → S2 FastEthernet0/6
+```
+
+R2 → S2
+
+```
+R2 G0/0 → S2 FastEthernet0/2
+```
+
+---
+
+# 🔹 Network 3 (192.168.3.0/24)
+
+PC-C → S3
+
+```
+PC-C FastEthernet0 → S3 FastEthernet0/18
+```
+
+RADIUS Server → S3
+
+```
+Server NIC → S3 FastEthernet0/1
+```
+
+R3 → S3
+
+```
+R3 G0/1 → S3 FastEthernet0/5
+```
+
+---
+
+# 🔹 Serial Connections
+
+R1 ↔ R2
+
+```
+R1 S0/0/0 → R2 S0/0/0
+Network: 10.1.1.0/30
+```
+
+R2 ↔ R3
+
+```
+R2 S0/0/1 → R3 S0/0/1
+Network: 10.2.2.0/30
+```
+
+Use **Serial DCE cable**.
+
+---
+
+# 2️⃣ IP Address Configuration
+
+## R1
+
+```
+enable
+configure terminal
+
+interface g0/1
+ip address 192.168.1.1 255.255.255.0
+no shutdown
+
+interface s0/0/0
+ip address 10.1.1.2 255.255.255.252
+no shutdown
+```
+
+---
+
+## R2
+
+```
+enable
+configure terminal
+
+interface g0/0
+ip address 192.168.2.1 255.255.255.0
+no shutdown
+
+interface s0/0/0
+ip address 10.1.1.1 255.255.255.252
+clock rate 64000
+no shutdown
+
+interface s0/0/1
+ip address 10.2.2.1 255.255.255.252
+clock rate 64000
+no shutdown
+```
+
+---
+
+## R3
+
+```
+enable
+configure terminal
+
+interface g0/1
+ip address 192.168.3.1 255.255.255.0
+no shutdown
+
+interface s0/0/1
+ip address 10.2.2.2 255.255.255.252
+no shutdown
+```
+
+---
+
+# 3️⃣ Configure OSPF Routing (All Routers)
+
+## R1
+
+```
+router ospf 1
+network 192.168.1.0 0.0.0.255 area 0
+network 10.1.1.0 0.0.0.3 area 0
+```
+
+---
+
+## R2
+
+```
+router ospf 1
+network 192.168.2.0 0.0.0.255 area 0
+network 10.1.1.0 0.0.0.3 area 0
+network 10.2.2.0 0.0.0.3 area 0
+```
+
+---
+
+## R3
+
+```
+router ospf 1
+network 192.168.3.0 0.0.0.255 area 0
+network 10.2.2.0 0.0.0.3 area 0
+```
+
+---
+
+# 4️⃣ Configure Local AAA on R1
+
+### Create User
+
+```
+username Admin1 secret admin1pa55
+```
+
+---
+
+### Enable AAA
+
+```
+aaa new-model
+```
+
+---
+
+### Authentication Method
+
+```
+aaa authentication login default local
+```
+
+---
+
+### Configure Console
+
+```
+line console 0
+login authentication default
+```
+
+---
+
+# 5️⃣ Configure SSH on R1
+
+```
+ip domain-name ccnasecurity.com
+crypto key generate rsa
+1024
+```
+
+---
+
+### Configure VTY
+
+```
+line vty 0 4
+transport input ssh
+login authentication default
+```
+
+---
+
+# 6️⃣ Configure TACACS+ Authentication (R2)
+
+### Add TACACS Server
+
+```
+tacacs-server host 192.168.2.2
+tacacs-server key tacacspa55
+```
+
+---
+
+### Enable AAA
+
+```
+aaa new-model
+```
+
+---
+
+### Authentication
+
+```
+aaa authentication login default group tacacs+ local
+```
+
+---
+
+### Apply to VTY
+
+```
+line vty 0 4
+login authentication default
+```
+
+---
+
+# 7️⃣ Configure TACACS Server
+
+Open **Server → Services → TACACS+**
+
+Enable:
+
+```
+Client: R2
+Key: tacacspa55
+
+User: Admin2
+Password: admin2pa55
+```
+
+---
+
+# 8️⃣ Configure RADIUS Authentication (R3)
+
+```
+aaa new-model
+
+radius-server host 192.168.3.2 key radiuspa55
+
+aaa authentication login default group radius local
+```
+
+---
+
+### Apply to VTY
+
+```
+line vty 0 4
+login authentication default
+```
+
+---
+
+# 9️⃣ Configure RADIUS Server
+
+Open **Server → Services → RADIUS**
+
+Enable:
+
+```
+Client: R3
+Key: radiuspa55
+
+User: Admin3
+Password: admin3pa55
+```
+
+---
+
+# 🔟 Test Connectivity
+
+Ping between all PCs:
+
+```
+PC-A → ping 192.168.2.3
+PC-A → ping 192.168.3.3
+PC-B → ping 192.168.3.3
+```
+
+---
+
+# 1️⃣1️⃣ Test AAA Login
+
+From **PC-A**
+
+```
+ssh -l Admin1 192.168.1.1
+```
+
+From **PC-B**
+
+```
+ssh -l Admin2 192.168.2.1
+```
+
+From **PC-C**
+
+```
+ssh -l Admin3 192.168.3.1
+```
+
+---
+
+✅ If you want, I can also give you:
+
+* **Complete Packet Tracer command list (copy-paste ready for exam)**
+* **Most common errors students make in AAA practical**
+* **Viva questions teachers ask from this practical** (very important for marks).
+
+
+
+
+I will explain this **Packet Tracer ACL Practical** in **3 simple parts** so you can easily build it:
+
+1️⃣ **All Connections (Topology Wiring)**
+2️⃣ **IP Address Configuration**
+3️⃣ **Extended ACL Configuration (Numbered + Named)**
+
+---
+
+# 1️⃣ Devices Required
+
+* 1 Router **Cisco 1941 (R1)**
+* 2 Switches **2960 (S1, S2)**
+* 2 PCs **PC1, PC2**
+* 1 **Server**
+
+---
+
+# 2️⃣ All Connections
+
+### PC1 → Switch S1
+
+* **PC1 FastEthernet0 → S1 FastEthernet0/1**
+* Cable: **Copper Straight Through**
+
+### Switch S1 → Router R1
+
+* **S1 FastEthernet0/2 → R1 G0/0**
+
+---
+
+### Router R1 → Switch S2
+
+* **R1 G0/1 → S2 FastEthernet0/1**
+
+### PC2 → Switch S2
+
+* **PC2 FastEthernet0 → S2 FastEthernet0/2**
+
+---
+
+### Server → Router
+
+* **Server FastEthernet → R1 G0/2**
+
+---
+
+# 3️⃣ IP Address Configuration
+
+## R1 Router
+
+```bash
+enable
+configure terminal
+```
+
+### Interface G0/0
+
+```bash
+interface g0/0
+ip address 172.22.34.65 255.255.255.224
+no shutdown
+```
+
+### Interface G0/1
+
+```bash
+interface g0/1
+ip address 172.22.34.97 255.255.255.240
+no shutdown
+```
+
+### Interface G0/2
+
+```bash
+interface g0/2
+ip address 172.22.34.1 255.255.255.192
+no shutdown
+```
+
+---
+
+# 4️⃣ PC and Server IP Configuration
+
+## PC1
+
+```
+IP Address: 172.22.34.66
+Subnet Mask: 255.255.255.224
+Default Gateway: 172.22.34.65
+```
+
+---
+
+## PC2
+
+```
+IP Address: 172.22.34.98
+Subnet Mask: 255.255.255.240
+Default Gateway: 172.22.34.97
+```
+
+---
+
+## Server
+
+```
+IP Address: 172.22.34.62
+Subnet Mask: 255.255.255.192
+Default Gateway: 172.22.34.1
+```
+
+---
+
+# 5️⃣ Server Configuration
+
+Open **Server → Services**
+
+Enable:
+
+### FTP
+
+```
+Services → FTP → ON
+```
+
+### HTTP (Web Server)
+
+```
+Services → HTTP → ON
+```
+
+---
+
+# 6️⃣ Extended Numbered ACL
+
+### Requirement
+
+* **PC1 → FTP only**
+* **PC2 → Web only**
+* **PC1 and PC2 cannot communicate with each other**
+
+---
+
+## Step 1: Create ACL
+
+```bash
+access-list 100 permit tcp 172.22.34.64 0.0.0.31 host 172.22.34.62 eq ftp
+```
+
+---
+
+### Allow ICMP
+
+```bash
+access-list 100 permit icmp any any
+```
+
+---
+
+### Allow Web Access from PC2
+
+```bash
+access-list 100 permit tcp 172.22.34.96 0.0.0.15 host 172.22.34.62 eq www
+```
+
+---
+
+### Deny Communication Between PCs
+
+```bash
+access-list 100 deny ip 172.22.34.64 0.0.0.31 172.22.34.96 0.0.0.15
+```
+
+---
+
+### Permit Remaining Traffic
+
+```bash
+access-list 100 permit ip any any
+```
+
+---
+
+# 7️⃣ Apply ACL to Router
+
+Apply on **G0/2 inbound**
+
+```bash
+interface g0/2
+ip access-group 100 in
+```
+
+---
+
+# 8️⃣ Named ACL Configuration
+
+Remove old ACL
+
+```bash
+no access-list 100
+```
+
+---
+
+Create Named ACL
+
+```bash
+ip access-list extended SERVER-ACCESS
+```
+
+---
+
+### FTP for PC1
+
+```bash
+permit tcp 172.22.34.64 0.0.0.31 host 172.22.34.62 eq ftp
+```
+
+---
+
+### Web for PC2
+
+```bash
+permit tcp 172.22.34.96 0.0.0.15 host 172.22.34.62 eq www
+```
+
+---
+
+### Deny PC Communication
+
+```bash
+deny ip 172.22.34.64 0.0.0.31 172.22.34.96 0.0.0.15
+```
+
+---
+
+### Allow Other Traffic
+
+```bash
+permit ip any any
+exit
+```
+
+---
+
+### Apply Named ACL
+
+```bash
+interface g0/2
+ip access-group SERVER-ACCESS in
+```
+
+---
+
+# 9️⃣ Testing
+
+### From PC1
+
+FTP to server
+
+```
+ftp 172.22.34.62
+```
+
+Should **WORK**
+
+---
+
+### From PC1 Web Browser
+
+```
+http://172.22.34.62
+```
+
+Should **NOT WORK**
+
+---
+
+### From PC2 Browser
+
+```
+http://172.22.34.62
+```
+
+Should **WORK**
+
+---
+
+### Ping Between PCs
+
+```
+PC1 → ping PC2
+```
+
+Should **FAIL**
+
+---
+
+✅ If you want, I can also show:
+
+* **Exact Packet Tracer topology diagram for this lab**
+* **Full copy-paste configuration (1 minute setup)**
+* **Most common ACL mistakes students make in exam**.
+
+
+
+I will explain this **Packet Tracer – Secure Access to Routers using ACL (VTY Access Control)** in **3 clear parts**:
+
+1️⃣ **All Device Connections**
+2️⃣ **IP Address Configuration**
+3️⃣ **ACL Configuration Steps (R1, R2, R3)**
+
+---
+
+# 1️⃣ Devices Required
+
+* 3 Routers **Cisco 1941** → R1, R2, R3
+* 3 Switches **2960** → S1, S2, S3
+* 3 PCs → **PC-A, PC-B, PC-C**
+* 1 Server
+
+---
+
+# 2️⃣ All Connections (Topology)
+
+## 🔹 Network 1 (192.168.1.0)
+
+PC-A → Switch S1
+
+```
+PC-A FastEthernet0 → S1 FastEthernet0/1
+```
+
+Server → Switch S1
+
+```
+Server FastEthernet → S1 FastEthernet0/2
+```
+
+Switch S1 → Router R1
+
+```
+S1 FastEthernet0/3 → R1 G0/0
+```
+
+---
+
+## 🔹 Router Connections
+
+R1 → R2
+
+```
+R1 S0/0/0 → R2 S0/0/0
+```
+
+R2 → R3
+
+```
+R2 S0/0/1 → R3 S0/0/1
+```
+
+Use **Serial DCE cable**
+
+---
+
+## 🔹 Network 2
+
+Switch S2 → Router R2
+
+```
+S2 FastEthernet0/1 → R2 G0/0
+```
+
+PC-B → Switch S2
+
+```
+PC-B FastEthernet0 → S2 FastEthernet0/2
+```
+
+---
+
+## 🔹 Network 3
+
+Switch S3 → Router R3
+
+```
+S3 FastEthernet0/1 → R3 G0/0
+```
+
+PC-C → Switch S3
+
+```
+PC-C FastEthernet0 → S3 FastEthernet0/2
+```
+
+---
+
+# 3️⃣ IP Address Configuration
+
+## R1
+
+```
+enable
+configure terminal
+
+interface g0/0
+ip address 192.168.1.1 255.255.255.0
+no shutdown
+
+interface s0/0/0
+ip address 10.1.1.1 255.255.255.252
+clock rate 64000
+no shutdown
+```
+
+---
+
+## R2
+
+```
+enable
+configure terminal
+
+interface g0/0
+ip address 192.168.2.1 255.255.255.0
+no shutdown
+
+interface s0/0/0
+ip address 10.1.1.2 255.255.255.252
+no shutdown
+
+interface s0/0/1
+ip address 10.2.2.1 255.255.255.252
+clock rate 64000
+no shutdown
+```
+
+---
+
+## R3
+
+```
+enable
+configure terminal
+
+interface g0/0
+ip address 192.168.3.1 255.255.255.0
+no shutdown
+
+interface s0/0/1
+ip address 10.2.2.2 255.255.255.252
+no shutdown
+```
+
+---
+
+# 4️⃣ PC and Server IP
+
+## PC-A
+
+```
+IP Address: 192.168.1.3
+Subnet Mask: 255.255.255.0
+Gateway: 192.168.1.1
+```
+
+---
+
+## PC-B
+
+```
+IP Address: 192.168.2.3
+Subnet Mask: 255.255.255.0
+Gateway: 192.168.2.1
+```
+
+---
+
+## PC-C (Management PC)
+
+```
+IP Address: 192.168.3.3
+Subnet Mask: 255.255.255.0
+Gateway: 192.168.3.1
+```
+
+---
+
+## Server
+
+```
+IP Address: 192.168.1.3
+Subnet Mask: 255.255.255.0
+Gateway: 192.168.1.1
+```
+
+Enable **HTTP Service** on the server.
+
+---
+
+# 5️⃣ Configure Routing (OSPF)
+
+## R1
+
+```
+router ospf 1
+network 192.168.1.0 0.0.0.255 area 0
+network 10.1.1.0 0.0.0.3 area 0
+```
+
+---
+
+## R2
+
+```
+router ospf 1
+network 192.168.2.0 0.0.0.255 area 0
+network 10.1.1.0 0.0.0.3 area 0
+network 10.2.2.0 0.0.0.3 area 0
+```
+
+---
+
+## R3
+
+```
+router ospf 1
+network 192.168.3.0 0.0.0.255 area 0
+network 10.2.2.0 0.0.0.3 area 0
+```
+
+---
+
+# 6️⃣ Configure SSH on Routers
+
+Run on **R1, R2, R3**
+
+```
+hostname R1
+ip domain-name cisco.com
+
+username SSHadmin secret cisco
+
+crypto key generate rsa
+1024
+```
+
+---
+
+### Configure VTY
+
+```
+line vty 0 4
+login local
+transport input ssh
+```
+
+---
+
+# 7️⃣ Configure ACL to Allow Only PC-C
+
+Run on **R1**
+
+```
+access-list 10 permit host 192.168.3.3
+```
+
+---
+
+Run on **R2**
+
+```
+access-list 10 permit host 192.168.3.3
+```
+
+---
+
+Run on **R3**
+
+```
+access-list 10 permit host 192.168.3.3
+```
+
+---
+
+# 8️⃣ Apply ACL on VTY Lines
+
+Run on **R1, R2, R3**
+
+```
+line vty 0 4
+access-class 10 in
+```
+
+---
+
+# 9️⃣ Testing
+
+## From PC-C (Allowed)
+
+```
+ssh -l SSHadmin 192.168.2.1
+```
+
+Connection **SUCCESS**
+
+---
+
+## From PC-A or PC-B
+
+```
+ssh -l SSHadmin 192.168.2.1
+```
+
+Connection **DENIED**
+
+---
+
+# 🔟 Verify Commands
+
+```
+show access-lists
+show running-config
+show ip ssh
+```
+
+---
+
+✅ If you want, I can also show you:
+
+* **Full Packet Tracer topology diagram for this lab**
+* **Complete copy-paste router configuration (all routers in one script)**
+* **5 very common mistakes students make in this ACL practical (important for exam)**.
+
+
+
+
+I’ll explain **Practical 5: Configuring IPv6 ACLs in Packet Tracer** in a **clear step-by-step format**:
+
+1️⃣ **All Device Connections**
+2️⃣ **IPv6 Address Configuration**
+3️⃣ **Routing Configuration**
+4️⃣ **IPv6 ACL 1 (Block HTTP/HTTPS)**
+5️⃣ **IPv6 ACL 2 (Block ICMP)**
+6️⃣ **Testing**
+
+---
+
+# 1️⃣ Devices Required
+
+* 3 Routers **Cisco 1941** → R1, R2, R3
+* 3 Switches **2960** → S1, S2, S3
+* 2 PCs → PC1, PC2
+* 1 Server → Server3
+
+---
+
+# 2️⃣ All Connections (Topology)
+
+### PC1 → Switch S1
+
+```
+PC1 FastEthernet0 → S1 FastEthernet0/1
+```
+
+### Switch S1 → Router R1
+
+```
+S1 FastEthernet0/2 → R1 GigabitEthernet0/0
+```
+
+---
+
+### PC2 → Switch S2
+
+```
+PC2 FastEthernet0 → S2 FastEthernet0/1
+```
+
+### Switch S2 → Router R1
+
+```
+S2 FastEthernet0/2 → R1 GigabitEthernet0/1
+```
+
+---
+
+### R1 → R2 (Serial)
+
+```
+R1 Serial0/0/0 → R2 Serial0/0/0
+```
+
+---
+
+### R2 → R3 (Serial)
+
+```
+R2 Serial0/0/1 → R3 Serial0/0/1
+```
+
+---
+
+### R3 → Switch S3
+
+```
+R3 GigabitEthernet0/0 → S3 FastEthernet0/1
+```
+
+### Switch S3 → Server3
+
+```
+S3 FastEthernet0/2 → Server3 FastEthernet
+```
+
+---
+
+# 3️⃣ IPv6 Address Configuration
+
+Enable IPv6 routing on **all routers**
+
+```
+enable
+configure terminal
+ipv6 unicast-routing
+```
+
+---
+
+# R1 Configuration
+
+### Interface G0/0 (PC1 Network)
+
+```
+interface g0/0
+ipv6 address 2001:DB8:1:10::1/64
+no shutdown
+```
+
+### Interface G0/1 (PC2 Network)
+
+```
+interface g0/1
+ipv6 address 2001:DB8:1:11::1/64
+no shutdown
+```
+
+### Serial Link to R2
+
+```
+interface s0/0/0
+ipv6 address 2001:DB8:1:12::1/64
+clock rate 64000
+no shutdown
+```
+
+---
+
+# R2 Configuration
+
+```
+interface s0/0/0
+ipv6 address 2001:DB8:1:12::2/64
+no shutdown
+
+interface s0/0/1
+ipv6 address 2001:DB8:1:13::1/64
+clock rate 64000
+no shutdown
+```
+
+---
+
+# R3 Configuration
+
+```
+interface s0/0/1
+ipv6 address 2001:DB8:1:13::2/64
+no shutdown
+```
+
+### Interface to Server Network
+
+```
+interface g0/0
+ipv6 address 2001:DB8:1:30::1/64
+no shutdown
+```
+
+---
+
+# 4️⃣ PC and Server IPv6
+
+## PC1
+
+```
+IPv6 Address: 2001:DB8:1:10::10
+Gateway: 2001:DB8:1:10::1
+```
+
+---
+
+## PC2
+
+```
+IPv6 Address: 2001:DB8:1:11::10
+Gateway: 2001:DB8:1:11::1
+```
+
+---
+
+## Server3
+
+```
+IPv6 Address: 2001:DB8:1:30::30
+Gateway: FE80::30
+```
+
+Enable **HTTP and HTTPS** on Server.
+
+---
+
+# 5️⃣ Configure IPv6 Routing (OSPFv3)
+
+### R1
+
+```
+ipv6 router ospf 1
+
+interface g0/0
+ipv6 ospf 1 area 0
+
+interface g0/1
+ipv6 ospf 1 area 0
+
+interface s0/0/0
+ipv6 ospf 1 area 0
+```
+
+---
+
+### R2
+
+```
+ipv6 router ospf 1
+
+interface s0/0/0
+ipv6 ospf 1 area 0
+
+interface s0/0/1
+ipv6 ospf 1 area 0
+```
+
+---
+
+### R3
+
+```
+ipv6 router ospf 1
+
+interface s0/0/1
+ipv6 ospf 1 area 0
+
+interface g0/0
+ipv6 ospf 1 area 0
+```
+
+---
+
+# 6️⃣ IPv6 ACL 1 (Block HTTP & HTTPS)
+
+Configure on **R1**
+
+```
+ipv6 access-list BLOCK_HTTP
+```
+
+Block HTTP
+
+```
+deny tcp any host 2001:DB8:1:30::30 eq www
+```
+
+Block HTTPS
+
+```
+deny tcp any host 2001:DB8:1:30::30 eq 443
+```
+
+Allow other traffic
+
+```
+permit ipv6 any any
+```
+
+---
+
+### Apply ACL
+
+```
+interface g0/1
+ipv6 traffic-filter BLOCK_HTTP in
+```
+
+---
+
+# 7️⃣ IPv6 ACL 2 (Block ICMP)
+
+Configure on **R3**
+
+```
+ipv6 access-list BLOCK_ICMP
+```
+
+Block ping
+
+```
+deny icmp any any
+```
+
+Allow other traffic
+
+```
+permit ipv6 any any
+```
+
+---
+
+### Apply ACL
+
+```
+interface g0/0
+ipv6 traffic-filter BLOCK_ICMP out
+```
+
+---
+
+# 8️⃣ Testing
+
+### From PC1
+
+Open browser
+
+```
+http://2001:DB8:1:30::30
+```
+
+Website **should work**
+
+---
+
+### From PC2
+
+```
+http://2001:DB8:1:30::30
+```
+
+Website **should be blocked**
+
+---
+
+### Ping Tests
+
+PC1
+
+```
+ping 2001:DB8:1:30::30
+```
+
+Should **fail**
+
+PC2
+
+```
+ping 2001:DB8:1:30::30
+```
+
+Should **fail**
+
+---
+
+# 9️⃣ Verification Commands
+
+On routers:
+
+```
+show ipv6 access-list
+show ipv6 interface
+show ipv6 route
+```
+
+---
+
+✅ If you want, I can also show you:
+
+* **Exact Packet Tracer topology diagram for this IPv6 ACL lab**
+* **Complete copy-paste configuration for R1, R2, R3 (1-minute setup)**
+* **Most common IPv6 ACL mistakes students make in exams**.
+
