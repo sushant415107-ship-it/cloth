@@ -1,0 +1,364 @@
+You are doing **Packet Tracer Practical: Configure Cisco Routers for Syslog, NTP, and SSH**.
+I will explain **1️⃣ All Connections** and **2️⃣ All Configuration Steps (R1, R2, R3, PCs)** in a **simple step-by-step format** so you can directly perform it in Packet Tracer. 🖧
+
+---
+
+# 1️⃣ Device Connections (Topology Wiring)
+
+### Devices Required
+
+* 3 Routers **1941** (R1, R2, R3)
+* 2 Switches **2960**
+* 3 PCs / Servers
+
+---
+
+## 🔹 Connections
+
+### PC-A → Switch S1
+
+* **PC-A FastEthernet0 → S1 FastEthernet0/6**
+* Cable: **Copper Straight Through**
+
+### PC-B → Switch S1
+
+* **PC-B FastEthernet0 → S1 FastEthernet0/18**
+* Cable: **Copper Straight Through**
+
+### R1 → Switch S1
+
+* **R1 G0/1 → S1 FastEthernet0/5**
+* Cable: **Copper Straight Through**
+
+---
+
+### R1 → R2 (Serial)
+
+* **R1 S0/0/0 (DCE) → R2 S0/0/0**
+* Cable: **Serial DCE**
+
+---
+
+### R2 → R3 (Serial)
+
+* **R2 S0/0/1 (DCE) → R3 S0/0/1**
+* Cable: **Serial DCE**
+
+---
+
+### R3 → Switch S3
+
+* **R3 G0/1 → S3 FastEthernet0/5**
+* Cable: **Copper Straight Through**
+
+---
+
+### PC-C → Switch S3
+
+* **PC-C FastEthernet0 → S3 FastEthernet0/18**
+* Cable: **Copper Straight Through**
+
+---
+
+# 2️⃣ IP Address Configuration
+
+## R1
+
+```
+enable
+configure terminal
+
+interface g0/1
+ip address 192.168.1.1 255.255.255.0
+no shutdown
+
+interface s0/0/0
+ip address 10.1.1.1 255.255.255.252
+clock rate 64000
+no shutdown
+```
+
+---
+
+## R2
+
+```
+enable
+configure terminal
+
+interface s0/0/0
+ip address 10.1.1.2 255.255.255.252
+no shutdown
+
+interface s0/0/1
+ip address 10.2.2.1 255.255.255.252
+clock rate 64000
+no shutdown
+```
+
+---
+
+## R3
+
+```
+enable
+configure terminal
+
+interface g0/1
+ip address 192.168.3.1 255.255.255.0
+no shutdown
+
+interface s0/0/1
+ip address 10.2.2.2 255.255.255.252
+no shutdown
+```
+
+---
+
+# 3️⃣ Configure OSPF with MD5 Authentication
+
+## On R1
+
+```
+router ospf 1
+area 0 authentication message-digest
+
+interface s0/0/0
+ip ospf message-digest-key 1 md5 MD5pa55
+```
+
+---
+
+## On R2
+
+```
+router ospf 1
+area 0 authentication message-digest
+
+interface s0/0/0
+ip ospf message-digest-key 1 md5 MD5pa55
+
+interface s0/0/1
+ip ospf message-digest-key 1 md5 MD5pa55
+```
+
+---
+
+## On R3
+
+```
+router ospf 1
+area 0 authentication message-digest
+
+interface s0/0/1
+ip ospf message-digest-key 1 md5 MD5pa55
+```
+
+---
+
+# 4️⃣ Configure OSPF Networks
+
+## R1
+
+```
+router ospf 1
+network 192.168.1.0 0.0.0.255 area 0
+network 10.1.1.0 0.0.0.3 area 0
+```
+
+---
+
+## R2
+
+```
+router ospf 1
+network 10.1.1.0 0.0.0.3 area 0
+network 10.2.2.0 0.0.0.3 area 0
+```
+
+---
+
+## R3
+
+```
+router ospf 1
+network 10.2.2.0 0.0.0.3 area 0
+network 192.168.3.0 0.0.0.255 area 0
+```
+
+---
+
+# 5️⃣ Configure NTP
+
+## On PC-A (NTP Server)
+
+Go to
+**PC-A → Services → NTP**
+
+Enable:
+
+```
+Authentication → Enable
+Key: 1
+Password: NTPpa55
+```
+
+---
+
+## Configure Routers as NTP Clients
+
+### R1
+
+```
+ntp server 192.168.1.5
+ntp update-calendar
+
+ntp authenticate
+ntp trusted-key 1
+ntp authentication-key 1 md5 NTPpa55
+```
+
+---
+
+### R2
+
+```
+ntp server 192.168.1.5
+ntp update-calendar
+
+ntp authenticate
+ntp trusted-key 1
+ntp authentication-key 1 md5 NTPpa55
+```
+
+---
+
+### R3
+
+```
+ntp server 192.168.1.5
+ntp update-calendar
+
+ntp authenticate
+ntp trusted-key 1
+ntp authentication-key 1 md5 NTPpa55
+```
+
+---
+
+# 6️⃣ Configure Syslog
+
+## On PC-B (Syslog Server)
+
+Go to:
+
+```
+PC-B → Services → Syslog → ON
+```
+
+---
+
+## On Routers
+
+### R1
+
+```
+logging 192.168.1.6
+service timestamps log datetime
+```
+
+### R2
+
+```
+logging 192.168.1.6
+service timestamps log datetime
+```
+
+### R3
+
+```
+logging 192.168.1.6
+service timestamps log datetime
+```
+
+---
+
+# 7️⃣ Configure SSH on R3
+
+```
+hostname R3
+ip domain-name cisco.com
+
+crypto key generate rsa
+1024
+```
+
+---
+
+### Create Username
+
+```
+username admin secret cisco
+```
+
+---
+
+### Configure VTY
+
+```
+line vty 0 4
+login local
+transport input ssh
+```
+
+---
+
+# 8️⃣ Test SSH from PC-C
+
+Open **PC-C Command Prompt**
+
+```
+ssh -l admin 192.168.3.1
+```
+
+Password:
+
+```
+cisco
+```
+
+---
+
+# 9️⃣ Verification Commands
+
+### Check OSPF
+
+```
+show ip ospf neighbor
+```
+
+### Check NTP
+
+```
+show ntp status
+```
+
+### Check Logs
+
+```
+show logging
+```
+
+### Check SSH
+
+```
+show ip ssh
+```
+
+---
+
+✅ If you want, I can also give:
+
+* **Full Packet Tracer lab file guide (exact port mapping)**
+* **Very common errors in this practical (students always make these mistakes)**
+* **Viva questions teachers ask from this practical** (very important)
